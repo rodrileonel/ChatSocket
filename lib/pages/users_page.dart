@@ -1,5 +1,9 @@
+import 'package:chat/pages/chat_page.dart';
 import 'package:chat/pages/login_page.dart';
 import 'package:chat/services/auth_service.dart';
+import 'package:chat/services/chat_service.dart';
+import 'package:chat/services/socket.dart';
+import 'package:chat/services/users_service.dart';
 import 'package:flutter/material.dart';
 import 'package:chat/models/user_model.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -16,19 +20,23 @@ class UsersPage extends StatefulWidget {
 }
 
 class _UsersPageState extends State<UsersPage> {
+
+  final usersService = UsersService();
   
   RefreshController _refreshController = RefreshController(initialRefresh: false);
 
-  final users = [
-    User(uid: '1',name: 'Rodri',email: 'rodrigo@rodrigo.com',online: true),
-    User(uid: '2',name: 'Leonel',email: 'leonel@rodrigo.com',online: false),
-    User(uid: '3',name: 'Abel',email: 'abel@rodrigo.com',online: true),
-    User(uid: '4',name: 'Otto',email: 'otto@rodrigo.com',online: true),
-  ];
+  List<User> users =[];
+
+  @override
+  void initState() {
+    _loadingUsers();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<AuthService>(context).user;
+    final socketService = Provider.of<SocketService>(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(user.name,style: TextStyle(color: Colors.black),),
@@ -37,7 +45,7 @@ class _UsersPageState extends State<UsersPage> {
         leading: IconButton(
           icon: Icon(Icons.exit_to_app_outlined,color: Colors.black),
           onPressed: (){
-            //TODO: desconectarnos del socket server
+            socketService.disconnect();
             AuthService.deleteToken();
             Navigator.pushReplacementNamed(context, LoginPage.routeName);
           },
@@ -46,7 +54,7 @@ class _UsersPageState extends State<UsersPage> {
           Container(
             alignment: Alignment.center,
             margin:EdgeInsets.only(right:20),
-            child: FaIcon(FontAwesomeIcons.plug, color: Colors.green),
+            child: FaIcon(FontAwesomeIcons.plug, color: (socketService.serverStatus==ServerStatus.Online)?Colors.green:Colors.grey),
           ),
         ],
       ),
@@ -68,8 +76,9 @@ class _UsersPageState extends State<UsersPage> {
   }
 
   void _loadingUsers() async {
-    await Future.delayed(Duration(milliseconds: 1000));
+    this.users = await usersService.getUsers();
     _refreshController.refreshCompleted();
+    setState(() {});
   }
 }
 
@@ -79,6 +88,7 @@ class UserItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    
     return ListTile(
       title: Text(user.name),
       subtitle: Text(user.email),
@@ -86,6 +96,11 @@ class UserItem extends StatelessWidget {
         child: Text(user.name.substring(0,2)),
       ),
       trailing: Icon(Icons.online_prediction, color: (user.online)?Colors.green:Colors.red,),
+      onTap: (){ 
+        final chatService = Provider.of<ChatService>(context,listen: false);
+        chatService.userFrom = user;
+        Navigator.pushNamed(context, ChatPage.routeName); 
+      },
     );
   }
 }

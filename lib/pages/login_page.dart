@@ -1,8 +1,8 @@
 import 'package:chat/helpers/show_alert.dart';
-import 'package:chat/pages/chat_page.dart';
 import 'package:chat/pages/register_page.dart';
 import 'package:chat/pages/users_page.dart';
 import 'package:chat/services/auth_service.dart';
+import 'package:chat/services/socket.dart';
 import 'package:chat/widgets/input.dart';
 import 'package:chat/widgets/login_register_button.dart';
 import 'package:chat/widgets/logo.dart';
@@ -51,6 +51,7 @@ class _Form extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
+    final socketService = Provider.of<SocketService>(context);
     return Center(
       child: Container(
         padding: EdgeInsets.symmetric(horizontal:40),
@@ -66,7 +67,9 @@ class _Form extends StatelessWidget {
                 FocusScope.of(context).unfocus();
                 final loginOK = await authService.login(emailController.text.trim(), passController.text);
                 if(loginOK){
-                  //TODO: conectar a socketserver
+                  //conectar a socketserver
+                  socketService.connect();
+                  //navegar a la pantalla de usuarios
                   Navigator.pushReplacementNamed(context, UsersPage.routeName);
                 }else{
                   showAlert(context, 'Login Incorrecto', 'Revisa tus credenciales ya vuelta');

@@ -2,6 +2,7 @@ import 'package:chat/helpers/show_alert.dart';
 import 'package:chat/pages/login_page.dart';
 import 'package:chat/pages/users_page.dart';
 import 'package:chat/services/auth_service.dart';
+import 'package:chat/services/socket.dart';
 import 'package:chat/widgets/button_sign.dart';
 import 'package:chat/widgets/input.dart';
 import 'package:chat/widgets/login_register_button.dart';
@@ -51,6 +52,7 @@ class _Form extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
+    final socketService = Provider.of<SocketService>(context);
     return Center(
       child: Container(
         padding: EdgeInsets.symmetric(horizontal:40),
@@ -67,7 +69,7 @@ class _Form extends StatelessWidget {
               press: authService.logeando ?null:() async {
                 final msg = await authService.register(userController.text.trim(), emailController.text.trim(), passController.text);
                 if(msg==true){
-                  //TODO: conectar al socketserver
+                  socketService.connect();
                   Navigator.pushReplacementNamed(context, UsersPage.routeName);
                 }
                 else
